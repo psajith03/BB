@@ -18,6 +18,7 @@
 		A9F3ED9A2B840F8400EDF2D3 /* BrickBreakerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9F3ED992B840F8400EDF2D3 /* BrickBreakerTests.swift */; };
 		A9F3EDA42B840F8400EDF2D3 /* BrickBreakerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9F3EDA32B840F8400EDF2D3 /* BrickBreakerUITests.swift */; };
 		A9F3EDA62B840F8400EDF2D3 /* BrickBreakerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9F3EDA52B840F8400EDF2D3 /* BrickBreakerUITestsLaunchTests.swift */; };
+		A9F3EDB32B853F0400EDF2D3 /* joystix in Resources */ = {isa = PBXBuildFile; fileRef = A9F3EDB22B853F0400EDF2D3 /* joystix */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +53,10 @@
 		A9F3ED9F2B840F8400EDF2D3 /* BrickBreakerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BrickBreakerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9F3EDA32B840F8400EDF2D3 /* BrickBreakerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrickBreakerUITests.swift; sourceTree = "<group>"; };
 		A9F3EDA52B840F8400EDF2D3 /* BrickBreakerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrickBreakerUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		A9F3EDB22B853F0400EDF2D3 /* joystix */ = {isa = PBXFileReference; lastKnownFileType = folder; name = joystix; path = ../../../Downloads/joystix; sourceTree = "<group>"; };
+		A9F3EDB52B853F3D00EDF2D3 /* joystix monospace.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "joystix monospace.otf"; sourceTree = "<group>"; };
+		A9F3EDB62B853F3D00EDF2D3 /* Typodermic Desktop EULA 2023.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Typodermic Desktop EULA 2023.pdf"; sourceTree = "<group>"; };
+		A9F3EDB72B853F3D00EDF2D3 /* read-this.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "read-this.html"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +87,7 @@
 		A9F3ED732B840F7B00EDF2D3 = {
 			isa = PBXGroup;
 			children = (
+				A9F3EDB22B853F0400EDF2D3 /* joystix */,
 				A9F3ED7E2B840F7B00EDF2D3 /* BrickBreaker */,
 				A9F3ED982B840F8400EDF2D3 /* BrickBreakerTests */,
 				A9F3EDA22B840F8400EDF2D3 /* BrickBreakerUITests */,
@@ -102,6 +108,7 @@
 		A9F3ED7E2B840F7B00EDF2D3 /* BrickBreaker */ = {
 			isa = PBXGroup;
 			children = (
+				A9F3EDB42B853F3D00EDF2D3 /* joystix */,
 				A9F3ED7F2B840F7B00EDF2D3 /* AppDelegate.swift */,
 				A9F3ED812B840F7C00EDF2D3 /* GameScene.sks */,
 				A9F3ED832B840F7C00EDF2D3 /* Actions.sks */,
@@ -129,6 +136,16 @@
 				A9F3EDA52B840F8400EDF2D3 /* BrickBreakerUITestsLaunchTests.swift */,
 			);
 			path = BrickBreakerUITests;
+			sourceTree = "<group>";
+		};
+		A9F3EDB42B853F3D00EDF2D3 /* joystix */ = {
+			isa = PBXGroup;
+			children = (
+				A9F3EDB52B853F3D00EDF2D3 /* joystix monospace.otf */,
+				A9F3EDB62B853F3D00EDF2D3 /* Typodermic Desktop EULA 2023.pdf */,
+				A9F3EDB72B853F3D00EDF2D3 /* read-this.html */,
+			);
+			path = joystix;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -238,6 +255,7 @@
 				A9F3ED8B2B840F7C00EDF2D3 /* Main.storyboard in Resources */,
 				A9F3ED822B840F7C00EDF2D3 /* GameScene.sks in Resources */,
 				A9F3ED8D2B840F8300EDF2D3 /* Assets.xcassets in Resources */,
+				A9F3EDB32B853F0400EDF2D3 /* joystix in Resources */,
 				A9F3ED902B840F8300EDF2D3 /* LaunchScreen.storyboard in Resources */,
 				A9F3ED842B840F7C00EDF2D3 /* Actions.sks in Resources */,
 			);
@@ -450,6 +468,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = J453Z6Q7L6;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -479,6 +498,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = J453Z6Q7L6;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;

@@ -1,224 +1,302 @@
 import SpriteKit
+import GameplayKit
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
     
+    // Define game elements
     var ball: SKSpriteNode!
     var paddle: SKSpriteNode!
-    var background: SKSpriteNode!
-    
+    var scoreLabel: SKLabelNode!
+    var highScoreLabel: SKLabelNode!
     var gameOverLabel: SKLabelNode!
     var tryAgainButton: SKSpriteNode!
-
-
     var livesLabel: SKLabelNode!
-    let initialLives = 3
+    var isGameOver = false
+    var score = 0 {
+        didSet {
+            scoreLabel.text = "Score: \(score)"
+        }
+    }
+    
+    var highScore: Int {
+        get {
+            UserDefaults.standard.integer(forKey: "highScore")
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "highScore")
+        }
+    }
+    
+    var initialLives = 3
     var ballFallsCounter = 0 {
         didSet {
             livesLabel.text = "Lives: \(initialLives - ballFallsCounter)"
+            if ballFallsCounter >= initialLives {
+                gameOver()
+            }
         }
     }
+    
     let ballCategory: UInt32 = 0x1 << 0
     let brickCategory: UInt32 = 0x1 << 1
     let paddleCategory: UInt32 = 0x1 << 2
     let borderCategory: UInt32 = 0x1 << 3
-
-    let maxVelocity: CGFloat = 1200.0
-
+    
+    let maxVelocity: CGFloat = 15.0 // Adjusted for more reasonable gameplay speed
+    
     override func didMove(to view: SKView) {
         super.didMove(to: view)
+        backgroundColor = SKColor.black
         setupScene()
         setupPhysics()
         createBricks()
-        setupLivesLabel()
+        setupLabels()
+        resetGame() // Use resetGame to initialize the game elements
     }
     
-    func setupLivesLabel() {
-        livesLabel = SKLabelNode(fontNamed: "Arial")
-        livesLabel.fontSize = 24
-        livesLabel.fontColor = SKColor.white
-        livesLabel.position = CGPoint(x: self.frame.minX + 70, y: self.frame.maxY - 50)
-        livesLabel.text = "Lives: \(initialLives)"
-        livesLabel.horizontalAlignmentMode = .left
-        addChild(livesLabel)
-    }
-
     func setupScene() {
-        background = SKSpriteNode(color: .black, size: self.size)
-        background.position = CGPoint(x: frame.midX, y: frame.midY)
-        addChild(background)
-
+        setupPaddle()
+        setupBall()
+    }
+    
+    func setupPhysics() {
+        physicsWorld.gravity = .zero
+        physicsWorld.contactDelegate = self
+        
+        let border = SKPhysicsBody(edgeLoopFrom: self.frame)
+        border.categoryBitMask = borderCategory
+        self.physicsBody = border
+    }
+    
+    func setupPaddle() {
         paddle = SKSpriteNode(color: .white, size: CGSize(width: 100, height: 20))
         paddle.position = CGPoint(x: frame.midX, y: frame.minY + 100)
         paddle.physicsBody = SKPhysicsBody(rectangleOf: paddle.size)
         paddle.physicsBody?.isDynamic = false
         paddle.physicsBody?.categoryBitMask = paddleCategory
         addChild(paddle)
-
+    }
+    
+    func setupBall() {
         ball = SKSpriteNode(color: .white, size: CGSize(width: 20, height: 20))
-        ball.position = CGPoint(x: frame.midX, y: paddle.position.y + 50)
+        ball.position = CGPoint(x: frame.midX, y: paddle.position.y + 30)
         ball.physicsBody = SKPhysicsBody(circleOfRadius: ball.size.width / 2)
-        ball.physicsBody?.isDynamic = true
         ball.physicsBody?.allowsRotation = false
         ball.physicsBody?.friction = 0
-        ball.physicsBody?.restitution = 1 // Perfectly elastic collision
+        ball.physicsBody?.restitution = 1
         ball.physicsBody?.linearDamping = 0
         ball.physicsBody?.categoryBitMask = ballCategory
-        ball.physicsBody?.contactTestBitMask = paddleCategory | brickCategory
-        ball.physicsBody?.collisionBitMask = borderCategory | paddleCategory | brickCategory
-        ball.physicsBody?.velocity = CGVector(dx: maxVelocity / sqrt(2), dy: maxVelocity / sqrt(2))
+        ball.physicsBody?.collisionBitMask = paddleCategory | brickCategory | borderCategory
+        ball.physicsBody?.contactTestBitMask = brickCategory | borderCategory
         addChild(ball)
-    }
-
-    func setupPhysics() {
-        physicsWorld.gravity = CGVector.zero
-        physicsWorld.contactDelegate = self
-        let border = SKPhysicsBody(edgeLoopFrom: self.frame)
-        border.friction = 0
-        border.restitution = 1
-        border.categoryBitMask = borderCategory
-        self.physicsBody = border
-    }
-
-    func didBegin(_ contact: SKPhysicsContact) {
-        var firstBody: SKPhysicsBody
-        var secondBody: SKPhysicsBody
-
-        if contact.bodyA.categoryBitMask < contact.bodyB.categoryBitMask {
-            firstBody = contact.bodyA
-            secondBody = contact.bodyB
-        } else {
-            firstBody = contact.bodyB
-            secondBody = contact.bodyA
-        }
-
-        if firstBody.categoryBitMask == ballCategory && secondBody.categoryBitMask == brickCategory {
-            if let brickNode = secondBody.node as? SKSpriteNode {
-                breakBrick(brick: brickNode)
-            }
-        } else if firstBody.categoryBitMask == brickCategory && secondBody.categoryBitMask == ballCategory {
-            if let brickNode = firstBody.node as? SKSpriteNode {
-                breakBrick(brick: brickNode)
-            }
-        }
-    }
-
-    func breakBrick(brick: SKSpriteNode) {
-        brick.removeFromParent()
-    }
-
-
-    func adjustBallVelocity(ball: SKSpriteNode, paddle: SKSpriteNode) {
-        let contactPoint = ball.position.x - paddle.position.x
-        let normalizedContactPoint = contactPoint / (paddle.size.width / 2)
-
-        if abs(normalizedContactPoint) > 0.8 {
-            let direction: CGFloat = normalizedContactPoint > 0 ? 1 : -1
-            let dx = maxVelocity / sqrt(2) * direction
-            let dy = maxVelocity / sqrt(2)
-            ball.physicsBody?.velocity = CGVector(dx: dx, dy: dy)
-        } else {
-            let currentSpeed = sqrt(ball.physicsBody!.velocity.dx * ball.physicsBody!.velocity.dx + ball.physicsBody!.velocity.dy * ball.physicsBody!.velocity.dy)
-            if currentSpeed != maxVelocity {
-                let multiplier = maxVelocity / currentSpeed
-                ball.physicsBody?.velocity.dx *= multiplier
-                ball.physicsBody?.velocity.dy *= multiplier
-            }
-        }
-    }
-
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let touch = touches.first {
-            let touchLocation = touch.location(in: self)
-            paddle.position.x = touchLocation.x
-        }
+        launchBall()
     }
     
     func createBricks() {
-        let brickWidth = CGFloat(30)
-        let brickHeight = CGFloat(30)
-        let numBricksPerRow = Int(20)
-        let totalRows = 5
-        let yOffset = frame.height - brickHeight - 900
+        let padding: CGFloat = 10.0
+        let numberOfBricksInRow: Int = 10
+        let numberOfRows: Int = 5
+        let brickHeight: CGFloat = 15
 
-        for row in 0..<totalRows {
-            for col in 0..<numBricksPerRow {
-                let brick = SKSpriteNode(color: .yellow, size: CGSize(width: brickWidth, height: brickHeight))
-                let xPos = (CGFloat(col) * brickWidth + brickWidth / 2) - 300
-                let yPos = yOffset - CGFloat(row) * brickHeight
-                brick.position = CGPoint(x: xPos, y: yPos)
+        // Calculate the width of all bricks including padding
+        let totalBricksWidth = frame.width * 0.8 // Use 80% of screen width for bricks
+        let brickWidth = (totalBricksWidth - padding * CGFloat(numberOfBricksInRow - 1)) / CGFloat(numberOfBricksInRow)
+        
+        // Offset to center the bricks horizontally
+        let offsetX = (frame.width - totalBricksWidth) / 2
+
+        // Calculating topMargin to place bricks in the top 30% of the screen
+        // Assuming the y=0 at the bottom of the screen, adjust if y=0 at the top
+        let topMargin = frame.height * 0.7 // Starting from the bottom, leave 70% of the screen height below the bricks
+
+        for row in 0..<numberOfRows {
+            for col in 0..<numberOfBricksInRow {
+                let brick = SKSpriteNode(color: .red, size: CGSize(width: brickWidth, height: brickHeight))
+                
+                // Calculate X and Y position for each brick
+                let brickXPosition = offsetX + CGFloat(col) * (brickWidth + padding)
+                // Adjust Y position to place bricks in the top 30% of the screen
+                let brickYPosition = topMargin - CGFloat(row) * (brickHeight + padding)
+                
+                // Adjust for SpriteKit's coordinate system (origin at center)
+                brick.position = CGPoint(x: brickXPosition - frame.width / 2, y: brickYPosition - frame.height / 2)
+                
                 brick.physicsBody = SKPhysicsBody(rectangleOf: brick.size)
                 brick.physicsBody?.isDynamic = false
                 brick.physicsBody?.categoryBitMask = brickCategory
-                brick.physicsBody?.collisionBitMask = 0
                 brick.name = "brick"
-                brick.zPosition = 1
+                
                 addChild(brick)
             }
         }
     }
-    
-    override func update(_ currentTime: TimeInterval) {
-        if ball.position.y < paddle.position.y - 50 {
-            ballFallsCounter += 1
-            resetBall()
-            if ballFallsCounter >= initialLives {
-                gameOver()
-            }
-        }
+
+
+
+
+    // Setup UI Elements
+    func setupScoreLabel() {
+        scoreLabel = SKLabelNode(fontNamed: "Arial")
+        scoreLabel.text = "Score: 0"
+        scoreLabel.fontSize = 24
+        scoreLabel.fontColor = .white
+        scoreLabel.position = CGPoint(x: -self.frame.size.width / 2 + 20, y: self.frame.size.height / 2 - 60)
+        scoreLabel.horizontalAlignmentMode = .left
+        addChild(scoreLabel)
     }
 
-        func resetBall() {
-            ball.position = CGPoint(x: paddle.position.x, y: paddle.position.y + 50)
-            ball.physicsBody?.velocity = CGVector(dx: 0, dy: maxVelocity / sqrt(2))
-        }
+    func setupLivesLabel() {
+        livesLabel = SKLabelNode(fontNamed: "Arial")
+        livesLabel.text = "Lives: \(initialLives)"
+        livesLabel.fontSize = 24
+        livesLabel.fontColor = .white
+        livesLabel.position = CGPoint(x: self.frame.size.width / 2 - 100, y: self.frame.size.height / 2 - 60)
+        livesLabel.horizontalAlignmentMode = .right
+        addChild(livesLabel)
+    }
+
+    func setupHighScoreLabel() {
+        highScoreLabel = SKLabelNode(fontNamed: "Arial")
+        highScoreLabel.text = "High Score: \(highScore)"
+        highScoreLabel.fontSize = 24
+        highScoreLabel.fontColor = .yellow
+        highScoreLabel.position = CGPoint(x: 0, y: self.frame.size.height / 2 - 30)
+        highScoreLabel.horizontalAlignmentMode = .center
+        addChild(highScoreLabel)
+    }
+
+    // Reset the Ball to Initial Position and Velocity
+    func resetBall() {
+        ball.position = CGPoint(x: frame.midX, y: paddle.position.y + 30)
+        ball.physicsBody?.velocity = .zero
+        ball.physicsBody?.applyImpulse(CGVector(dx: CGFloat.random(in: -50...50), dy: maxVelocity))
+    }
+
+    // Game Over Logic
 
     func gameOver() {
+        if score > highScore {
+            highScore = score
+            highScoreLabel.text = "High Score: \(highScore)"
+        }
+    
+        isGameOver = true
         showGameOverScreen()
     }
 
-
+    // Show Game Over UI
     func showGameOverScreen() {
-        backgroundColor = .black
-        
         gameOverLabel = SKLabelNode(fontNamed: "Arial")
         gameOverLabel.text = "Game Over"
         gameOverLabel.fontSize = 40
         gameOverLabel.fontColor = .red
-        gameOverLabel.position = CGPoint(x: frame.midX, y: frame.midY + 20)
+        gameOverLabel.position = CGPoint(x: frame.midX, y: frame.midY)
         addChild(gameOverLabel)
-        
-        tryAgainButton = SKSpriteNode(color: .green, size: CGSize(width: 200, height: 60))
-        tryAgainButton.position = CGPoint(x: frame.midX, y: frame.midY - 40)
+
+        tryAgainButton = SKSpriteNode(color: .blue, size: CGSize(width: 200, height: 80))
+        tryAgainButton.position = CGPoint(x: frame.midX, y: frame.midY - 100)
         tryAgainButton.name = "tryAgainButton"
         let buttonText = SKLabelNode(fontNamed: "Arial")
         buttonText.text = "Try Again"
         buttonText.fontSize = 30
         buttonText.fontColor = .white
-        buttonText.position = CGPoint.zero
         tryAgainButton.addChild(buttonText)
         addChild(tryAgainButton)
-        
-        ball.removeFromParent()
     }
 
     func resetGame() {
+        isGameOver = false
         ballFallsCounter = 0
+        score = 0
+        
         removeAllChildren()
+        
+        // Re-setup the scene
         setupScene()
         setupPhysics()
         createBricks()
-        setupLivesLabel()
+        setupLabels() // This method should setup all labels including the score, lives, and high score
     }
+
+
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
-        let nodesAtLocation = nodes(at: location)
-        
-        if nodesAtLocation.contains(where: { $0.name == "tryAgainButton" }) {
+        let node = atPoint(location)
+
+        // Use 'name' property to detect the "Try Again" button press
+        if node.name == "tryAgainButton" {
             resetGame()
+        } else {
+            // Handle other touches if necessary
         }
     }
 
-}
 
+
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        let touch = touches.first!
+        let location = touch.location(in: self)
+        paddle.position.x = location.x
+    }
+
+    // Physics Contact Delegate Method
+    func didBegin(_ contact: SKPhysicsContact) {
+        let collision = contact.bodyA.categoryBitMask | contact.bodyB.categoryBitMask
+        if collision == ballCategory | brickCategory {
+            if contact.bodyA.categoryBitMask == brickCategory {
+                contact.bodyA.node?.removeFromParent()
+            } else if contact.bodyB.categoryBitMask == brickCategory {
+                contact.bodyB.node?.removeFromParent()
+            }
+            score += 1
+        }
+    }
+
+    // Adjust Ball Velocity Based on Where It Hits the Paddle
+    func adjustBallVelocity(_ contact: SKPhysicsContact) {
+        guard let ball = contact.bodyA.categoryBitMask == ballCategory ? contact.bodyA.node as? SKSpriteNode : contact.bodyB.node as? SKSpriteNode else { return }
+        let hitPoint = contact.contactPoint
+        let paddleCenter = paddle.position.x
+        let offset = hitPoint.x - paddleCenter
+        let maxOffset = paddle.size.width / 2
+        let velocityMultiplier = offset / maxOffset
+        ball.physicsBody?.velocity.dx += velocityMultiplier * 100 // Adjust this multiplier as needed
+    }
+
+    // Update Loop for Checking Game State
+    override func update(_ currentTime: TimeInterval) {
+        if (!isGameOver && ball.position.y < paddle.position.y - 50) {
+            ballFallsCounter += 1
+            if ballFallsCounter >= initialLives {
+                gameOver()
+            } else {
+                resetBall()
+            }
+        }
+    }
+
+    func setupLabels() {
+        setupScoreLabel()
+        setupLivesLabel()
+        setupHighScoreLabel()
+    }
+    
+    func launchBall() {
+        let dx = CGFloat.random(in: -maxVelocity...maxVelocity)
+        let dy = maxVelocity
+        ball.physicsBody?.applyImpulse(CGVector(dx: dx, dy: dy))
+    }
+
+    func breakBrick(brick: SKSpriteNode) {
+        brick.removeFromParent()
+        score += 1
+        
+        if children.filter({ $0.name == "brick" }).isEmpty {
+            // All bricks are broken; player wins
+            gameOver()
+        }
+    }
+}
